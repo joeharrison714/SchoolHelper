@@ -1,6 +1,3 @@
-// This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
-// Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
-// session persistence, api calls, and more.
 const Alexa = require('ask-sdk-core');
 
 const HomeworkIntentHandler = {
@@ -9,6 +6,8 @@ const HomeworkIntentHandler = {
             && handlerInput.requestEnvelope.request.intent.name === 'HomeworkIntent';
     },
     handle(handlerInput) {
+        
+        let speechText = "";
 
         var homeworkData = {};
 
@@ -18,8 +17,6 @@ const HomeworkIntentHandler = {
         
         
         var dateToCheck = getDateToCheck(handlerInput)
-        
-        let speechText = "";
         
         var lookupDate = formatDate(dateToCheck, '-')
         
