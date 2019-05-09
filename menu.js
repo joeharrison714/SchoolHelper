@@ -1,0 +1,258 @@
+// This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
+// Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
+// session persistence, api calls, and more.
+const Alexa = require('ask-sdk-core');
+const request = require('request');
+const cheerio = require('cheerio')
+const deasync = require('deasync');
+
+var done=false;
+var menuitems
+
+const MenuIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'MenuIntent';
+    },
+    handle(handlerInput) {
+        var speechText = '';
+        
+        var dateToCheck = getDateToCheck(handlerInput)
+        
+        var mealToCheck = getMeal(handlerInput)
+        
+        done=false
+        var items = checkMenu(dateToCheck, mealToCheck)
+        
+        require('deasync').loopWhile(function(){return !done;});
+        
+        items=menuitems
+        console.log('number of items',items.length)
+        
+        if (items.length > 0){
+            speechText = 'The menu for ' + mealToCheck + ' on ' + '<say-as interpret-as="date">' + formatDateNoYear(dateToCheck, '') + "</say-as> is "
+        
+            speechText += buildItems(items)
+            
+            speechText += ". Enjoy!"
+        }
+        else{
+            speechText = 'I don\'t have any menu information for ' + mealToCheck + ' on ' + '<say-as interpret-as="date">' + formatDateNoYear(dateToCheck, '') + "</say-as>"
+        
+        }
+        
+        console.log(speechText)
+        
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+
+async function checkMenu(date, meal){
+    var mealId = 2885
+    if (meal === 'Breakfast') mealId = 2884
+    
+    var formattedDate = formatDate(date)
+    var url = 'https://downingtownasd.schooldish.com/Commerce/Catalog/Menus.aspx?LocationId=10852&PeriodId=' + mealId + '&MenuDate=' + formattedDate + '&Mode=day&UIBuildDateFrom=' + formattedDate
+    
+    console.log(url)
+    
+    var data = await downloadPage(url)
+    
+    console.log(data)
+    
+    var html = cheerio.load(data)
+    
+    var items = [];
+    
+    var remove = ' - click to add to Menu calculator'
+    
+    html('#m_Hot_Station .checkboxCalculate').each(function(i, elem) {
+        var txt = html(this).attr('aria-label')
+        txt = txt.substring(0, txt.length - remove.length)
+      items[i] = txt;
+      console.log(i,txt)
+    });
+    
+    done=true
+    menuitems=items
+    return items
+}
+// wrap a request in an promise
+function downloadPage(url) {
+    return new Promise((resolve, reject) => {
+        request(url, (error, response, body) => {
+            if (error) reject(error);
+            if (response.statusCode !== 200) {
+                reject('Invalid status code <' + response.statusCode + '>');
+            }
+            resolve(body);
+        });
+    });
+}
+
+function buildItems(menuItems){
+    
+    var speechText = '';
+    
+    menuItems.forEach(function(item, index, array) {
+                
+        var numberOfItems = menuItems.length
+        var lastItem = (numberOfItems - 1) === index
+        
+        if (numberOfItems > 1 && lastItem){
+            speechText += " and ";
+        }
+        
+        speechText += item.replace(" w/ ", " with ").replace(" & ", " and ").replace(", ", " ");
+        
+        if (numberOfItems > 1 && !lastItem){
+            speechText += ", ";
+        }
+    });
+    
+    return speechText;
+}
+
+function getMeal(handlerInput){
+    var meal = 'Lunch';
+    if (typeof handlerInput.requestEnvelope.request.intent.slots.Meal.value !== "undefined") {
+      meal = handlerInput.requestEnvelope.request.intent.slots.Meal.value;
+    }
+    return meal
+}
+
+function getDateToCheck(handlerInput){
+    var dateToCheck = Date.now();
+    if (typeof handlerInput.requestEnvelope.request.intent.slots.Date.value !== "undefined") {
+      dateToCheck = Date.parse(handlerInput.requestEnvelope.request.intent.slots.Date.value);
+    }
+    return dateToCheck
+}
+
+function formatDate(date, joinUsing) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join(joinUsing);
+}
+
+function formatDateNoYear(date, joinUsing) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return ['????', month, day].join(joinUsing);
+}
+
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const speechText = 'Welcome, you can ask about what is on the menu.';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speechText = 'You can say hello to me! How can I help?';
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
+                || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speechText = 'Goodbye!';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse();
+    }
+};
+
+// The intent reflector is used for interaction model testing and debugging.
+// It will simply repeat the intent the user said. You can create custom handlers
+// for your intents by defining them above, then also adding them to the request
+// handler chain below.
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = handlerInput.requestEnvelope.request.intent.name;
+        const speechText = `You just triggered ${intentName}`;
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+
+// Generic error handling to capture any syntax or routing errors. If you receive an error
+// stating the request handler chain is not found, you have not implemented a handler for
+// the intent being invoked or included it in the skill builder below.
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        console.log(`~~~~ Error handled: ${error.message}`);
+        const speechText = `Sorry, I couldn't understand what you said. Please try again.`;
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+
+// This handler acts as the entry point for your skill, routing all request and response
+// payloads to the handlers above. Make sure any new handlers or interceptors you've
+// defined are included below. The order matters - they're processed top to bottom.
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        MenuIntentHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler) // make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
+    .addErrorHandlers(
+        ErrorHandler)
+    .lambda();
