@@ -52,7 +52,7 @@ const MenuIntentHandler = {
 
 async function checkMenu(date, meal){
     var mealId = 2885
-    if (meal === 'Breakfast') mealId = 2884
+    if (meal === 'breakfast') mealId = 2884
     
     var formattedDate = formatDate(date)
     var url = 'https://downingtownasd.schooldish.com/Commerce/Catalog/Menus.aspx?LocationId=10852&PeriodId=' + mealId + '&MenuDate=' + formattedDate + '&Mode=day&UIBuildDateFrom=' + formattedDate
