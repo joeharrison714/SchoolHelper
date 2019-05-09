@@ -1,0 +1,5 @@
+        var homeworkData = {};
+
+        homeworkData['2019-05-07'] = ["Math worksheet", "dissect frog"]
+        homeworkData['2019-05-08'] = ['<phoneme alphabet="ipa" ph="rid">read</phoneme> a book']
+        homeworkData['2019-05-09'] = ['do 10 jumping jacks']
