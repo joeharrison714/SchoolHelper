@@ -1,0 +1,7 @@
+        if (lookupDate in homeworkData){
+            speechText = "The homework for "
+            speechText += "<say-as interpret-as=\"date\">" + formatDateNoYear(dateToCheck, '') + "</say-as>"
+            speechText += " is "
+            
+            speechText += buildHomeworkString(homeworkData[lookupDate])
+        }
