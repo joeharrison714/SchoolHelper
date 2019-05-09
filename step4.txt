@@ -1,0 +1,4 @@
+        else{
+            speechText = "I don't know of any homework for "
+            speechText += '<say-as interpret-as="date">' + formatDateNoYear(dateToCheck, '') + "</say-as>"
+        }
