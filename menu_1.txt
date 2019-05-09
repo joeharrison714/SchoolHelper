@@ -1,0 +1,30 @@
+async function checkMenu(date, meal){
+    var mealId = 2885
+    if (meal === 'breakfast') mealId = 2884
+    
+    var formattedDate = formatDate(date)
+    var url = 'https://downingtownasd.schooldish.com/Commerce/Catalog/Menus.aspx?LocationId=10852&PeriodId=' + mealId + '&MenuDate=' + formattedDate + '&Mode=day&UIBuildDateFrom=' + formattedDate
+    
+    console.log(url)
+    
+    var data = await downloadPage(url)
+    
+    console.log(data)
+    
+    var html = cheerio.load(data)
+    
+    var items = [];
+    
+    var remove = ' - click to add to Menu calculator'
+    
+    html('#m_Hot_Station .checkboxCalculate').each(function(i, elem) {
+        var txt = html(this).attr('aria-label')
+        txt = txt.substring(0, txt.length - remove.length)
+      items[i] = txt;
+      console.log(i,txt)
+    });
+    
+    done=true
+    menuitems=items
+    return items
+}
