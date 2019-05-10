@@ -1,0 +1,46 @@
+STEP 0
+
+const HelloWorldIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'HelloWorldIntent';
+    },
+    handle(handlerInput) {
+        const speechText = 'Hello World!';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .getResponse();
+    }
+};
+
+STEP 1
+
+
+        var homeworkData = {};
+
+        homeworkData['2019-05-07'] = ["Math worksheet", "dissect frog"]
+        homeworkData['2019-05-08'] = ['<phoneme alphabet="ipa" ph="rid">read</phoneme> a book']
+        homeworkData['2019-05-09'] = ['do 10 jumping jacks']
+
+STEP 2
+
+var dateToCheck = getDateToCheck(handlerInput)
+
+STEP 3
+
+        var lookupDate = formatDate(dateToCheck, '-')
+
+        if (lookupDate in homeworkData){
+            speechText = "The homework for "
+            speechText += "<say-as interpret-as=\"date\">" + formatDateNoYear(dateToCheck, '') + "</say-as>"
+            speechText += " is "
+            
+            speechText += buildHomeworkString(homeworkData[lookupDate])
+        }
+
+STEP 4
+
+        else{
+            speechText = "I don't know of any homework for "
+            speechText += '<say-as interpret-as="date">' + formatDateNoYear(dateToCheck, '') + "</say-as>"
+        }
